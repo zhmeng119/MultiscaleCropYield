@@ -48,6 +48,14 @@ p_dat_667_h <- ArableClient(device = "A000667", measure = "hourly",
 #                      "p_dat_667_h" = p_dat_667_h)
 # write.xlsx(dataset_list, file = "pod_data.xlsx")
 
+# write.csv(p_dat_680_d, file = "Data/Pod_A000680_daily.csv")
+# write.csv(p_dat_680_h, file = "Data/Pod_A000680_hourly.csv")
+# write.csv(p_dat_671_d, file = "Data/Pod_A000671_daily.csv")
+# write.csv(p_dat_671_h, file = "Data/Pod_A000671_hourly.csv")
+# write.csv(p_dat_667_d, file = "Data/Pod_A000667_daily.csv")
+# write.csv(p_dat_667_h, file = "Data/Pod_A000667_hourly.csv")
+
+
 # Testing
 # Calculate APAR  
 library(dplyr)
