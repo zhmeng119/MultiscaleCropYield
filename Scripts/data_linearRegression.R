@@ -14,7 +14,9 @@ result <- predict(relation,temp)
 
 # y <- p_dat_680_d$NDVI
 y <- c(p_dat_680_d %>% filter(.,time %>% substring(.,1,4)==2018) %>% select(.,NDVI) %>% unlist(use.names=FALSE))
-x <- c(1:length(y))
+
+x <- c(p_dat_680_d %>% filter(.,time %>% substring(.,1,4)==2018) %>% select(.,SWdw) %>% unlist(use.names=FALSE))
+# x <- c(1:length(y))
 # x <-  p_dat_680_d %>% filter(.,time %>% substring(.,1,4)==2018) %>% select(SWdw)
 # x <- x$SWdw
 #fit first degree polynomial equation:

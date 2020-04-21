@@ -65,6 +65,7 @@ library(zoo)
 
 # A function used to clean up NDVI NA value and replace with interpolated value
 data_preprocess <- function(dataset){
+  # Pod_671_d dataset
   # check NA
   if("TRUE" %in% is.na(dataset$NDVI)) {
     # Get the index of NA for orginal dataset
@@ -72,7 +73,7 @@ data_preprocess <- function(dataset){
     
     # get index of the end date of 2018 and start date of 2019
     enddate_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018) %>% count() %>% as.numeric()
-    startdate_2019 <- days2018+1
+    startdate_2019 <- enddate_2018+1
     
     # Interpolate NA value using library(zoo)
     # the independent variable is SWdw
@@ -176,7 +177,23 @@ APAR_Pod680 <- APAR(Pod_680_d)
 
 
 
+# Part 3: calculate APAR for pod A000680, A000671, A000667
+Pod_680_d <- p_dat_680_d
+Pod_680_d <- data_preprocess(Pod_680_d)
+Pod_680_d <- Pod_680_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
+APAR_Pod680 <- APAR(Pod_680_d)
 
+Pod_671_d <- p_dat_671_d
+Pod_671_d <- data_preprocess(Pod_671_d)
+Pod_671_d <- Pod_671_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
+APAR_Pod671 <- APAR(Pod_671_d)
+
+Pod_667_d <- p_dat_667_d
+Pod_667_d <- data_preprocess(Pod_667_d)
+Pod_667_d <- Pod_667_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
+APAR_Pod667 <- APAR(Pod_667_d[-1,])
+
+result_APAR <- rbind(APAR_Pod680,APAR_Pod671,APAR_Pod667)
 
 
 
