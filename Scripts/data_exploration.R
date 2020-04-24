@@ -78,21 +78,29 @@ data_preprocess <- function(dataset){
     # Interpolate NA value using library(zoo)
     # the independent variable is SWdw
     # Interpolation is seperated by year
-    tempZ_Whole <- zoo(dataset)
-    approxZ_2018 <- na.approx(tempZ_Whole$NDVI[1:enddate_2018],tempZ_Whole$SWdw[1:enddate_2018],na.rm = FALSE)
-    approxZ_2019 <- na.approx(tempZ_Whole$NDVI[startdate_2019:length(dataset$NDVI)],tempZ_Whole$SWdw[startdate_2019:length(dataset$SWdw)],na.rm = FALSE)
+    approxZ_2018 <- zoo::na.approx(dataset$NDVI[1:enddate_2018],na.rm = FALSE) %>% as.data.frame()
+    approxZ_2019 <- zoo::na.approx(dataset$NDVI[startdate_2019:length(dataset$NDVI)],na.rm = FALSE) %>% as.data.frame()
     approxZ_whole <- rbind(approxZ_2018,approxZ_2019)
+    print(which(is.na(approxZ_whole)))
     # check NA for the interpolation result, assign 0 to the NA value 
     # and change the value in dataset at the same time
     for(index in indexNA_raw){
-      if(is.na(approxZ_whole[index])== TRUE){
-        print('replace value with 0')
+      if(is.na(approxZ_whole[index,])== TRUE){
+        print(c('The interpolated result is NA for index: ',index))
+        print("this row will be removed")
+        print("````````````````````````````````````````````````````")
+        # dataset <- dataset[-c(index),]
+        # print('replace value with 0')
         dataset$NDVI[index] <- 0
+        # dataset <- dataset[!(dataset$NDVI==0),]
       } else{
-        print(c('replace value with :', approxZ_whole[index] %>% as.numeric()))
-        dataset$NDVI[index] <- approxZ_whole[index] %>% as.numeric()
+        print(c('replace value with :', approxZ_whole[index,] %>% as.numeric()))
+        dataset$NDVI[index] <- approxZ_whole[index,] %>% as.numeric()
       }
     }
+    
+    # the next step is remove record tha have 0 in NDVI
+    dataset <- dataset[!(dataset$NDVI==0),]
     
     
   } else{
@@ -191,7 +199,7 @@ APAR_Pod671 <- APAR(Pod_671_d)
 Pod_667_d <- p_dat_667_d
 Pod_667_d <- data_preprocess(Pod_667_d)
 Pod_667_d <- Pod_667_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
-APAR_Pod667 <- APAR(Pod_667_d[-1,])
+APAR_Pod667 <- APAR(Pod_667_d)
 
 result_APAR <- rbind(APAR_Pod680,APAR_Pod671,APAR_Pod667)
 
@@ -201,6 +209,18 @@ result_APAR <- rbind(APAR_Pod680,APAR_Pod671,APAR_Pod667)
 
 
 
+
+
+
+# p_2018 <- p_dat_680_d %>% filter(.,time %>% substring(.,1,4)==2018) %>% select(., NDVI) %>% unlist(use.names=FALSE)
+# approxZ_2018 <- zoo::na.approx(p_2018,na.rm = FALSE)
+# 
+# p_2019 <- p_dat_680_d %>% filter(.,time %>% substring(.,1,4)==2019) %>% select(., NDVI) %>% unlist(use.names=FALSE)
+# approxZ_2019 <- zoo::na.approx(p_2019,na.rm = FALSE)
+# 
+# 
+# approxZ_whole <- p_dat_680_d %>% select(., NDVI) %>% unlist(use.names=FALSE)
+# zoo::na.approx(approxZ_whole)
 
 
 
