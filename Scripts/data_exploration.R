@@ -169,14 +169,17 @@ sig_Pod680_2019 <- sumPARfPAR(Pod_680_d_2019)
 # index 2; 2019 APAR
 APAR <- function(dataset){
   
+  # unit conversion index
+  unitCon <- 864*0.0001
+  
   dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
   dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)
   
   sum_2018 <- sumPARfPAR(dataset_2018)
   sum_2019 <- sumPARfPAR(dataset_2019)
   
-  APAR_2018 <- sum_2018*length(dataset_2018$time)
-  APAR_2019 <- sum_2019*length(dataset_2019$time)
+  APAR_2018 <- sum_2018*length(dataset_2018$time)*unitCon
+  APAR_2019 <- sum_2019*length(dataset_2019$time)*unitCon
   
   return(c(APAR_2018,APAR_2019))
 }
