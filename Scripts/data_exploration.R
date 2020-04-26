@@ -183,28 +183,55 @@ APAR <- function(dataset){
   
   return(c(APAR_2018,APAR_2019))
 }
-# testing
+# testinga
 APAR_Pod680 <- APAR(Pod_680_d)
 
 
+Yield <- function(dataset){
+  
+  # unit conversion index
+  unitCon <- 864*0.0001
+  
+  # 4.2 is provided by the dsat tutorial
+  LUE <- 4.2
+  
+  # 
+  HI <- 0.7
+  
+  dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
+  dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)
+  
+  sum_2018 <- sumPARfPAR(dataset_2018)
+  sum_2019 <- sumPARfPAR(dataset_2019)
+  
+  Yield_2018 <- sum_2018*length(dataset_2018$time)*unitCon*LUE*HI
+  Yield_2019 <- sum_2019*length(dataset_2019$time)*unitCon*LUE*HI
+  
+  return(c(Yield_2018,Yield_2019))
+}
 
-# Part 3: calculate APAR for pod A000680, A000671, A000667
+
+# Part 3: calculate APAR and Yield for pod A000680, A000671, A000667
 Pod_680_d <- p_dat_680_d
 Pod_680_d <- data_preprocess(Pod_680_d)
 Pod_680_d <- Pod_680_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
 APAR_Pod680 <- APAR(Pod_680_d)
+Yield_Pod680 <- Yield(Pod_680_d)
 
 Pod_671_d <- p_dat_671_d
 Pod_671_d <- data_preprocess(Pod_671_d)
 Pod_671_d <- Pod_671_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
 APAR_Pod671 <- APAR(Pod_671_d)
+Yield_Pod671 <- Yield(Pod_671_d)
 
 Pod_667_d <- p_dat_667_d
 Pod_667_d <- data_preprocess(Pod_667_d)
 Pod_667_d <- Pod_667_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
 APAR_Pod667 <- APAR(Pod_667_d)
+Yield_Pod667 <- Yield(Pod_667_d)
 
 result_APAR <- rbind(APAR_Pod680,APAR_Pod671,APAR_Pod667)
+result_Yield <- rbind(Yield_Pod680,Yield_Pod671,Yield_Pod667)
 
 
 
