@@ -1,0 +1,93 @@
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import interpolate
+
+# p_dat_d_url = r'E:\EO_2\data\pod_data_671_d.csv'  
+p_dat_d_url =  r'E:\EO_2\data\pod_data_680_d.csv'
+# p_dat_d_url = r'E:\EO_2\data\pod_data_667_d.csv'
+p_dat_d = pd.read_csv(p_dat_d_url)
+# fill the missisng data with 999 
+p_dat_d = p_dat_d.fillna(999)
+
+sigma = 4.2
+HI = 2.4
+df_ndvi = p_dat_d['NDVI']
+df_date = p_dat_d['time']
+df_SWdw = p_dat_d['SWdw']
+
+date = df_date.values
+SWdw_data = df_SWdw.values
+
+# calculate the number of data in each season
+date_season1 = 0   
+for j in range(date.shape[0]):
+    if date[j][3] == '8':
+        date_season1 += 1 
+date_season2 = date.shape[0] - date_season1  
+print(date_season1)
+print(date_season2)
+
+NDVI_orginal = df_ndvi.values
+print(NDVI_orginal)
+Season1_NDVI_org = NDVI_orginal[: date_season1]
+Season2_NDVI_org = NDVI_orginal[date_season1 :]
+
+# Interpolate NDVI missing values
+def interpolation_data(num_data, NDVI_orginal):
+    # this function is using neasest values to interpolate missing value
+    for i in range(num_data):
+        if NDVI_orginal[i] == 999 :
+            if i == 0:
+                NDVI_orginal[0] = (NDVI_orginal[1] +  NDVI_orginal[2])/2
+            elif i > 0 and i < (num_data-2):
+                NDVI_orginal[i] = (NDVI_orginal[i-1]+NDVI_orginal[i+1])/2
+            else: 
+                NDVI_orginal[i] = NDVI_orginal[i-1]
+    print(NDVI_orginal)          
+    return NDVI_orginal
+
+# calculate fPAR
+def calculate_fPAR_NDVI(MAX_NDVI, MIN_NDVI, NDVI):
+    
+    fPAR = 1- ((MAX_NDVI - NDVI)/(MAX_NDVI - MIN_NDVI)) * 0.625
+    
+    return fPAR
+     
+# calculate PAR 
+def calculate_PAR(downwelling_SW):
+    
+    PAR = 0.5 * downwelling_SW
+    
+    return PAR
+
+# calculate Yield
+def calculate_yield( NDVI, downwelling_SW, detaT, sigma, havest_index):
+    
+    temp = 0 
+    # maximum NDVI and minimum NDVI
+    NDVI_max = np.max(NDVI)
+    NDVI_min = np.min(NDVI)
+    print('Max NDVI: ', NDVI_max)
+    print('Min NDVI: ', NDVI_min)
+    
+    for i in range(NDVI.shape[0]):
+        daily_fPAR = calculate_fPAR_NDVI(NDVI_max,NDVI_min, NDVI[i])
+        daily_PAR = calculate_PAR(downwelling_SW[i])
+        temp = temp + daily_fPAR * daily_PAR
+
+    
+    Yield = temp * detaT * sigma * HI 
+    
+    return Yield
+    
+# season one 
+Season1_NDVI = interpolation_data(date_season1, Season1_NDVI_org )
+yield_18 = calculate_yield(Season1_NDVI,SWdw_data,date_season1, sigma, HI)
+print('2018 Yield: ', yield_18)
+
+# season two
+Season2_NDVI = interpolation_data(date_season2, Season2_NDVI_org )
+yield_19 = calculate_yield(Season2_NDVI,SWdw_data,date_season2, sigma, HI)
+print('2019 Yield: ', yield_19)
