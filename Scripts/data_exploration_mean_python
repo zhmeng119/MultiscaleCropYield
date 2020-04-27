@@ -32,7 +32,7 @@ Season2_NDVI_org = NDVI_orginal[date_season1 :]
 
 # Interpolate NDVI missing values
 def interpolation_data(num_data, NDVI_orginal):
-    
+    # this function is interpolate data using the average value of the dataset
     imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
     X = np.arange(num_data) 
     y = NDVI_orginal
