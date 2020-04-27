@@ -170,7 +170,8 @@ sig_Pod680_2019 <- sumPARfPAR(Pod_680_d_2019)
 APAR <- function(dataset){
   
   # unit conversion index
-  unitCon <- 864*0.0001
+  # kg/ha
+  unitCon <- 864*0.001
   
   dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
   dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)
@@ -190,7 +191,8 @@ APAR_Pod680 <- APAR(Pod_680_d)
 Yield <- function(dataset){
   
   # unit conversion index
-  unitCon <- 864*0.0001
+  # kg/ha
+  unitCon <- 864*0.001
   
   # 4.2 is provided by the dsat tutorial
   LUE <- 4.2
