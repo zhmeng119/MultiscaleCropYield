@@ -77,8 +77,8 @@ def calculate_yield( NDVI, downwelling_SW, detaT, sigma, havest_index):
         daily_PAR = calculate_PAR(downwelling_SW[i])
         temp = temp + daily_fPAR * daily_PAR
 
-    
-    Yield = temp * detaT * sigma * HI 
+    # unit: kg/ha
+    Yield = temp * detaT * sigma * HI * 0.864
     
     return Yield
     
