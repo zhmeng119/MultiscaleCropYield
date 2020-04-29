@@ -80,6 +80,8 @@ result_Yield_sat
 
 # Part 3: Plot the NDVI value 
 library(ggplot2)
+library(cowplot)
+
 
 test_Pod680_d
 sat_pod680_2018
@@ -88,18 +90,105 @@ test_Pod680_d_2018
 test_Pod680_d_2019
 
 
-ggplot()+
+pod680_p1 <- ggplot()+
   geom_line(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
   geom_line(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
-  xlab("Date") +
-  scale_color_identity(guide = "legend")
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+
+pod680_p2 <- ggplot()+
+  geom_line(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_line(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+
+pod680_gp <- cowplot::plot_grid(pod680_p1,pod680_p2)
+################################################################################################
+pod671_p1 <- ggplot()+
+  geom_line(data = sat_pod671_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_line(data = test_Pod671_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod671")
+
+pod671_p2 <- ggplot()+
+  geom_line(data = sat_pod671_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_line(data = test_Pod671_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod671")
+
+pod671_gp <- cowplot::plot_grid(pod671_p1,pod671_p2)
+################################################################################################
+pod667_p1 <- ggplot()+
+  geom_line(data = sat_pod667_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_line(data = test_Pod667_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod667")
+
+pod667_p2 <- ggplot()+
+  geom_line(data = sat_pod667_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_line(data = test_Pod667_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod667")
+
+pod667_gp <- cowplot::plot_grid(pod667_p1,pod667_p2)
+
+# Summary plot
+cowplot::plot_grid(pod680_gp,pod671_gp,pod667_gp)
 
 
 
 
+pod680_smo1 <- ggplot()+
+  geom_point(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+pod680_smo2 <- ggplot()+
+  geom_point(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+pod680_smo <- cowplot::plot_grid(pod680_smo1,pod680_smo2)
+##############################################################################################
+pod671_smo1 <- ggplot()+
+  geom_point(data = sat_pod671_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod671_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod671_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod671_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod671")
+pod671_smo2 <- ggplot()+
+  geom_point(data = sat_pod671_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod671_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod671_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod671_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod671")
+pod671_smo <- cowplot::plot_grid(pod671_smo1,pod671_smo2)
+##############################################################################################
+pod667_smo1 <- ggplot()+
+  geom_point(data = sat_pod667_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod667_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod667_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod667_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod667")
+pod667_smo2 <- ggplot()+
+  geom_point(data = sat_pod667_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod667_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod667_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod667_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod667")
+pod667_smo <- cowplot::plot_grid(pod667_smo1,pod667_smo2)
 
 
-
+# Summary plot
+cowplot::plot_grid(pod680_smo,pod671_smo,pod667_smo)
 
 
 
