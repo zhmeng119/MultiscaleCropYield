@@ -46,10 +46,10 @@ Yield_sat_pod667 <- Yield(sat_pod667)
 
 # Combine results from pod A000680, A000671, A000667
 result_Yield_sat <- rbind(Yield_sat_pod680,Yield_sat_pod671,Yield_sat_pod667)
+colnames(result_Yield_sat) <- c("2018","2019")
 
 
-
-# Part 2: compare the results from pod data and satellite data
+# Part 2: compare the results between pod data and satellite data
 # Shrink down the dataset to the size of satellite data based on the date
 Pod_680_d$time <- Pod_680_d$time %>% as.Date()
 Pod_671_d$time <- Pod_671_d$time %>% as.Date()
@@ -72,7 +72,7 @@ test_Pod667_d <- rbind(test_Pod667_d_2018,test_Pod667_d_2019)
 testYield_Pod667 <- Yield(test_Pod667_d)
 
 result_testYield_pod <- rbind(testYield_Pod680,testYield_Pod671,testYield_Pod667)
-
+colnames(result_testYield_pod) <- c("2018","2019")
 
 
 result_testYield_pod
@@ -83,7 +83,7 @@ library(ggplot2)
 library(cowplot)
 
 
-test_Pod680_d
+test_Pod680_da
 sat_pod680_2018
 sat_pod680_2019
 test_Pod680_d_2018
@@ -137,7 +137,7 @@ cowplot::plot_grid(pod680_gp,pod671_gp,pod667_gp)
 
 
 
-
+# Smooth curve
 pod680_smo1 <- ggplot()+
   geom_point(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
   geom_smooth(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
@@ -190,5 +190,28 @@ pod667_smo <- cowplot::plot_grid(pod667_smo1,pod667_smo2)
 # Summary plot
 cowplot::plot_grid(pod680_smo,pod671_smo,pod667_smo)
 
+
+
+pod680_smo1 <- ggplot()+
+  geom_point(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2018)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+pod680_smo2 <- ggplot()+
+  geom_point(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_smooth(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
+  geom_point(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  geom_smooth(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date (2019)") +
+  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
+pod680_smo <- cowplot::plot_grid(pod680_smo1,pod680_smo2)
+
+
+
+
+
+  
 
 

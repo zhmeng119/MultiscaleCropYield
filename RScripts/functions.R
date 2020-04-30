@@ -144,7 +144,7 @@ Yield <- function(dataset){
   LUE <- 4.2
   
   # 
-  HI <- 0.7
+  HI <- 0.4
   
   dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
   dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)

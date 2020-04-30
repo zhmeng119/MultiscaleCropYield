@@ -80,9 +80,11 @@ APAR_Pod667 <- APAR(Pod_667_d)
 Yield_Pod667 <- Yield(Pod_667_d)
 
 result_APAR <- rbind(APAR_Pod680,APAR_Pod671,APAR_Pod667)
+colnames(result_APAR) <- c("2018","2019")
+result_APAR
 result_Yield <- rbind(Yield_Pod680,Yield_Pod671,Yield_Pod667)
-
-
+colnames(result_Yield) <- c("2018","2019")
+result_Yield
 
 
 # Part 3: processed-pod data export
