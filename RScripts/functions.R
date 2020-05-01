@@ -163,52 +163,179 @@ Yield <- function(dataset){
 
 # satellite data based
 ###############################################################################################################################################################
+
+# Version 2
 # A function to preprocess downloaded NDVI data based on Sentinel-2 for pod A000680, A000671, A000667
 satdata_preprocess <- function(sat_data){
   ## select date and NDVI value from the list
   sat_data <- sat_data %>% select(.,date ,NDVI)
+  colnames(sat_data) <- c("date","NDVI_Sen")
   sat_data$date <- sat_data$date %>% as.Date()
   
   ## calculate the mean of NDVI for repeated dates
-  sat_data <- aggregate(NDVI~date,sat_data,mean)
+  sat_data <- aggregate(NDVI_Sen~date,sat_data,mean)
   sat_data <- sat_data %>% as.data.frame()
   
   return(sat_data)
 }
 
-# A function to replace NDVI in pod data with satellite data, and return a new dataset
+# A function to interpolate Sentinel 2 NDVI value
 sat_pod_process <- function(sat_data, pod_d){
+  temp <- pod_d
   ## select out data that are available in sat_data from pod_d 
   pod_d <- pod_d[(pod_d$time %>% ymd()) %in% sat_data$date,]
   pod_d$time <- pod_d$time %>% as.Date()
   pod_d <- pod_d %>% as.data.frame()
   
-  # drop unnecessary cols
-  pod_d <- subset(pod_d, select=-c(X,NDVI))
-  
+  # Merge the table and drop NDVI_Sen if NDVI_Sen < 0.75 NDVI
   sat_pod <- merge(pod_d,sat_data,by.x = "time",by.y = "date")
+  sat_pod <- sat_pod %>% as.data.frame()
+  for(row in 1:nrow(sat_pod)){
+    if(sat_pod$NDVI[row]*0.75 > sat_pod$NDVI_Sen[row]){
+      print("replace with NA")
+      sat_pod$NDVI_Sen[row] <- NA
+    }
+  }
   
-  return(sat_pod)
+  # process pod_d data before use
+  temp
+  temp$time <- temp$time %>% as.Date()
+  # filter based on time
+  temp <- temp %>% filter(.,time %>% substring(.,1,4)==sat_pod$time[1] %>% substring(.,1,4))
+  temp <- temp %>% full_join(sat_pod, by="X")
+  # Check the first and the last row for "NDVI_Sen", and paste the NDVI of pod to NDVI_Sen if NDVI_Sen is NA
+  # This is a preparation for the later interpolation
+  if(is.na(temp$NDVI_Sen[1])){
+    temp$NDVI_Sen[1] <- temp$NDVI.x[1]
+    print("Fixing the head")
+  }
+  if(is.na(temp$NDVI_Sen[length(temp$NDVI_Sen)])){
+    
+    temp$NDVI_Sen[length(temp$NDVI_Sen)] <- temp$NDVI.x[length(temp$NDVI_Sen)]
+    print("Fixing the tail")
+  }else{
+    print("All good")
+  }
+  temp$NDVI_Sen <- na.approx(temp$NDVI_Sen)
+  temp <- subset(temp, select=-c(X,NDVI.x,time.y,NDVI.y,SWdw.y,PAR.y))
+  colnames(temp) <- c("time","SWdw","PAR","NDVI")
+  
+  return(temp)
 }
 
-# # Testing
+
+# # # Testing
 # # try to read date from CSV files
 # pod680 <- read.csv(file = 'Data/Pod_680_d.csv')
+# temp_pod680 <- pod680
 # gee_pod680_2018 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2018.csv')
+# gee_pod680_2019 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2019.csv')
 # 
+# ##########2018
 # ## do some cleaning work on the gee data
 # gee_pod680_2018 <- gee_pod680_2018 %>% select(.,date ,NDVI)
+# colnames(gee_pod680_2018) <- c("date","NDVI_Sen")
 # gee_pod680_2018$date <- gee_pod680_2018$date %>% as.Date()
 # 
 # ## get the mean of repeated dates
-# gee_pod680_2018 <- aggregate(NDVI~date,gee_pod680_2018,mean)
+# gee_pod680_2018 <- aggregate(NDVI_Sen~date,gee_pod680_2018,mean)
 # gee_pod680_2018 <- gee_pod680_2018 %>% as.data.frame()
 # 
 # ## select out the data that are available in GEE
-# pod680 <- pod680[(pod680$time %>% ymd()) %in% gee_pod680_2018$date,]
-# pod680$time <- pod680$time %>% as.Date()
-# pod680 <- pod680 %>% as.data.frame()
-# pod680 <- subset(pod680, select=-c(X,NDVI))
+# pod680_2018 <- pod680[(pod680$time %>% ymd()) %in% gee_pod680_2018$date,]
+# pod680_2018$time <- pod680_2018$time %>% as.Date()
+# pod680_2018 <- pod680_2018 %>% as.data.frame()
+# # pod680_2018 <- subset(pod680_2018, select=-c(X))
 # 
-# sat_pod680_2018 <- merge(pod680,gee_pod680_2018,by.x = "time",by.y = "date")
+# # drop NDVI_Sen if NDVI_Sen < 0.75 NDVI,
+# # and merge the table
+# sat_pod680_2018 <- merge(pod680_2018,gee_pod680_2018,by.x = "time",by.y = "date")
+# sat_pod680_2018 <- sat_pod680_2018 %>% as.data.frame()
+# 
+# for(row in 1:nrow(sat_pod680_2018)){
+#   if(sat_pod680_2018$NDVI[row]*0.75 > sat_pod680_2018$NDVI_Sen[row]){
+#     print("replace with NA")
+#     sat_pod680_2018$NDVI_Sen[row] <- NA
+#   }
+# }
+# sat_pod680_2018
+# 
+# temp_pod680$time <- temp_pod680$time %>% as.Date()
+# temp_pod680_2018 <- temp_pod680 %>% filter(.,time %>% substring(.,1,4)==sat_pod680_2018$time[1] %>% substring(.,1,4))
+# # sat_pod680_2018$time[1] %>% substring(.,1,4)
+# temp_pod680_2018 <- temp_pod680_2018 %>% full_join(sat_pod680_2018, by="X")
+# # ratio = NDVI/NDVI_sen
+# # temp_pod680_2018 <- temp_pod680_2018 %>% mutate(., "rndvi" = temp_pod680_2018$NDVI_Sen/temp_pod680_2018$NDVI.x)
+# # temp_pod680_2018$rndvi %>% mean(., na.rm = TRUE)
+# # tail(temp_pod680_2018$rndvi[!is.na(temp_pod680_2018$rndvi)],1)
+# # head(temp_pod680_2018$rndvi[!is.na(temp_pod680_2018$rndvi)],1)
+# if(is.na(temp_pod680_2018$NDVI_Sen[1])){
+#   temp_pod680_2018$NDVI_Sen[1] <- temp_pod680_2018$NDVI.x[1]
+#   print("Fixing the head")
+# }
+# if(is.na(temp_pod680_2018$NDVI_Sen[length(temp_pod680_2018$NDVI_Sen)])){
+#   
+#   temp_pod680_2018$NDVI_Sen[length(temp_pod680_2018$NDVI_Sen)] <- temp_pod680_2018$NDVI.x[length(temp_pod680_2018$NDVI_Sen)]
+#   print("Fixing the tail")
+# }else{
+#   print("All good")
+# }
+# temp_pod680_2018$NDVI_Sen <- na.approx(temp_pod680_2018$NDVI_Sen)
+# temp_pod680_2018 <- subset(temp_pod680_2018, select=-c(X,NDVI.x,time.y,NDVI.y,SWdw.y,PAR.y))
+# colnames(temp_pod680_2018) <- c("time","SWdw","PAR","NDVI")
+# 
+# 
+# 
+# ##########2019
+# ## do some cleaning work on the gee data
+# gee_pod680_2019 <- gee_pod680_2019 %>% select(.,date ,NDVI)
+# colnames(gee_pod680_2019) <- c("date","NDVI_Sen")
+# gee_pod680_2019$date <- gee_pod680_2019$date %>% as.Date()
+# 
+# ## get the mean of repeated dates
+# gee_pod680_2019 <- aggregate(NDVI_Sen~date,gee_pod680_2019,mean)
+# gee_pod680_2019 <- gee_pod680_2019 %>% as.data.frame()
+# 
+# ## select out the data that are available in GEE
+# pod680_2019 <- pod680[(pod680$time %>% ymd()) %in% gee_pod680_2019$date,]
+# pod680_2019$time <- pod680_2019$time %>% as.Date()
+# pod680_2019 <- pod680_2019 %>% as.data.frame()
+# # pod680_2019 <- subset(pod680_2019, select=-c(X))
+# 
+# # drop NDVI_Sen if NDVI_Sen < 0.75 NDVI,
+# # and merge the table
+# sat_pod680_2019 <- merge(pod680_2019,gee_pod680_2019,by.x = "time",by.y = "date")
+# sat_pod680_2019 <- sat_pod680_2019 %>% as.data.frame()
+# 
+# for(row in 1:nrow(sat_pod680_2019)){
+#   if(sat_pod680_2019$NDVI[row]*0.75 > sat_pod680_2019$NDVI_Sen[row]){
+#     print("replace with NA")
+#     sat_pod680_2019$NDVI_Sen[row] <- NA
+#   }
+# }
+# sat_pod680_2019
+# 
+# temp_pod680$time <- temp_pod680$time %>% as.Date()
+# temp_pod680_2019 <- temp_pod680 %>% filter(.,time %>% substring(.,1,4)==sat_pod680_2019$time[1] %>% substring(.,1,4))
+# # sat_pod680_2019$time[1] %>% substring(.,1,4)
+# temp_pod680_2019 <- temp_pod680_2019 %>% full_join(sat_pod680_2019, by="X")
+# # ratio = NDVI/NDVI_sen
+# # temp_pod680_2019 <- temp_pod680_2019 %>% mutate(., "rndvi" = temp_pod680_2019$NDVI_Sen/temp_pod680_2019$NDVI.x)
+# # temp_pod680_2019$rndvi %>% mean(., na.rm = TRUE)
+# # tail(temp_pod680_2019$rndvi[!is.na(temp_pod680_2019$rndvi)],1)
+# # head(temp_pod680_2019$rndvi[!is.na(temp_pod680_2019$rndvi)],1)
+# if(is.na(temp_pod680_2019$NDVI_Sen[1])){
+#   temp_pod680_2019$NDVI_Sen[1] <- temp_pod680_2019$NDVI.x[1]
+#   print("Fixing the head")
+# }
+# if(is.na(temp_pod680_2019$NDVI_Sen[length(temp_pod680_2019$NDVI_Sen)])){
+#   
+#   temp_pod680_2019$NDVI_Sen[length(temp_pod680_2019$NDVI_Sen)] <- temp_pod680_2019$NDVI.x[length(temp_pod680_2019$NDVI_Sen)]
+#   print("Fixing the tail")
+# }else{
+#   print("All good")
+# }
+# temp_pod680_2019$NDVI_Sen <- na.approx(temp_pod680_2019$NDVI_Sen)
+# temp_pod680_2019 <- subset(temp_pod680_2019, select=-c(X,NDVI.x,time.y,NDVI.y,SWdw.y,PAR.y))
+# colnames(temp_pod680_2019) <- c("time","SWdw","PAR","NDVI")
 ###############################################################################################################################################################

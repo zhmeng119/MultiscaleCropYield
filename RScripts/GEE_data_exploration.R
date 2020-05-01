@@ -47,35 +47,12 @@ Yield_sat_pod667 <- Yield(sat_pod667)
 # Combine results from pod A000680, A000671, A000667
 result_Yield_sat <- rbind(Yield_sat_pod680,Yield_sat_pod671,Yield_sat_pod667)
 colnames(result_Yield_sat) <- c("2018","2019")
+result_Yield_sat
+
 
 
 # Part 2: compare the results between pod data and satellite data
-# Shrink down the dataset to the size of satellite data based on the date
-Pod_680_d$time <- Pod_680_d$time %>% as.Date()
-Pod_671_d$time <- Pod_671_d$time %>% as.Date()
-Pod_667_d$time <- Pod_667_d$time %>% as.Date()
-
-
-test_Pod680_d_2018 <- Pod_680_d[(Pod_680_d$time %>% ymd()) %in% gee_pod680_2018$date,]
-test_Pod680_d_2019 <- Pod_680_d[(Pod_680_d$time %>% ymd()) %in% gee_pod680_2019$date,]
-test_Pod680_d <- rbind(test_Pod680_d_2018,test_Pod680_d_2019)
-testYield_Pod680 <- Yield(test_Pod680_d)
-
-test_Pod671_d_2018 <- Pod_671_d[(Pod_671_d$time %>% ymd()) %in% gee_pod671_2018$date,]
-test_Pod671_d_2019 <- Pod_671_d[(Pod_671_d$time %>% ymd()) %in% gee_pod671_2019$date,]
-test_Pod671_d <- rbind(test_Pod671_d_2018,test_Pod671_d_2019)
-testYield_Pod671 <- Yield(test_Pod671_d)
-
-test_Pod667_d_2018 <- Pod_667_d[(Pod_667_d$time %>% ymd()) %in% gee_pod667_2018$date,]
-test_Pod667_d_2019 <- Pod_667_d[(Pod_667_d$time %>% ymd()) %in% gee_pod667_2019$date,]
-test_Pod667_d <- rbind(test_Pod667_d_2018,test_Pod667_d_2019)
-testYield_Pod667 <- Yield(test_Pod667_d)
-
-result_testYield_pod <- rbind(testYield_Pod680,testYield_Pod671,testYield_Pod667)
-colnames(result_testYield_pod) <- c("2018","2019")
-
-
-result_testYield_pod
+result_Yield
 result_Yield_sat
 
 # Part 3: Plot the NDVI value 
@@ -83,11 +60,11 @@ library(ggplot2)
 library(cowplot)
 
 
-test_Pod680_da
+
 sat_pod680_2018
 sat_pod680_2019
-test_Pod680_d_2018
-test_Pod680_d_2019
+test_Pod680_d_2018 <- Pod_680_d  %>% filter(.,time %>% substring(.,1,4)==2018)
+test_Pod680_d_2019 <- Pod_680_d  %>% filter(.,time %>% substring(.,1,4)==2019)
 
 
 pod680_p1 <- ggplot()+
@@ -102,7 +79,13 @@ pod680_p2 <- ggplot()+
   xlab("Date (2019)") +
   ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
 
-pod680_gp <- cowplot::plot_grid(pod680_p1,pod680_p2)
+
+pod680_gp <- cowplot::plot_grid(pod680_p1,pod680_p2) +
+  draw_text("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680", hjust = 0.5, vjust = 0.1)
+
+
+
+
 ################################################################################################
 pod671_p1 <- ggplot()+
   geom_line(data = sat_pod671_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
@@ -190,25 +173,13 @@ pod667_smo <- cowplot::plot_grid(pod667_smo1,pod667_smo2)
 # Summary plot
 cowplot::plot_grid(pod680_smo,pod671_smo,pod667_smo)
 
+temp_sat_pod680 <- sat_pod680 %>% mutate(., year = sat_pod680$time %>% substring(.,1,4))
 
-
-pod680_smo1 <- ggplot()+
-  geom_point(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
-  geom_smooth(data = sat_pod680_2018, aes(x = time %>% as.Date(), y = NDVI), color="red") +
-  geom_point(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
-  geom_smooth(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
-  xlab("Date (2018)") +
+ggplot()+
+  geom_line(data = temp_sat_pod680, aes(x = c(1:90), y = NDVI), colour=year) +
+  # geom_line(data = test_Pod680_d_2018, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
+  xlab("Date") +
   ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
-pod680_smo2 <- ggplot()+
-  geom_point(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
-  geom_smooth(data = sat_pod680_2019, aes(x = time %>% as.Date(), y = NDVI), color="red") +
-  geom_point(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
-  geom_smooth(data = test_Pod680_d_2019, aes(x = time %>% as.Date(), y = NDVI), color="blue") +
-  xlab("Date (2019)") +
-  ggtitle("Pod NDVI(blue) VS Sentinel-2 NDVI(red), Pod680")
-pod680_smo <- cowplot::plot_grid(pod680_smo1,pod680_smo2)
-
-
 
 
 
