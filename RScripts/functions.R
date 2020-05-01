@@ -114,8 +114,8 @@ sumPARfPAR <- function(dataset){
 APAR <- function(dataset){
   
   # unit conversion index
-  # kg/ha
-  unitCon <- 864*0.001
+  # W/m^-2 * d -> MJ/ha
+  unitCon <- 864
   
   dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
   dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)
@@ -138,11 +138,12 @@ APAR <- function(dataset){
 Yield <- function(dataset){
   
   # unit conversion index
-  # kg/ha
-  unitCon <- 864*0.001
+  # MJ/ha
+  unitCon <- 864
   
   # 4.2 is provided by the dsat tutorial
-  LUE <- 4.2
+  # kg/MJ
+  LUE <- 4.2*0.001
   
   # 
   HI <- 0.4
