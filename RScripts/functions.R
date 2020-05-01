@@ -15,8 +15,9 @@ data_preprocess <- function(dataset){
     indexNA_raw <- which(is.na(dataset$NDVI))
     
     # get index of the end date of 2018 and start date of 2019
-    enddate_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018) %>% count() %>% as.numeric()
-    startdate_2019 <- enddate_2018+1
+    enddate_2018 <- dataset %>% 
+      filter(.,time %>% substring(., 1, 4) == 2018) %>% count() %>% as.numeric()
+    startdate_2019 <- enddate_2018 + 1
     
     # Interpolate NA value using library(zoo)
     # the independent variable is SWdw

@@ -56,7 +56,7 @@ p_dat_667_d <- ArableClient(device = "A000667", measure = "daily",
 # write.csv(p_dat_667_d, file = "Data/Pod_A000667_daily.csv")
 # write.csv(p_dat_667_h, file = "Data/Pod_A000667_hourly.csv")
 
-setwd("~/multiscale_cropyield")
+# setwd("~/multiscale_cropyield")
 source("RScripts/functions.R")
 
 
