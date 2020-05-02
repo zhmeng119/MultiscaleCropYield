@@ -92,7 +92,7 @@ getMaxMinNDVI <- function(dataset){
 sumPARfPAR <- function(dataset){
   temp_sum <- 0
   for(day in 1:length(dataset$time)){
-    # print(day)
+    print(day)
     PAR <- dataset$PAR[day]
     # calculate fPAR
     mmNDVI <- getMaxMinNDVI(dataset)
@@ -103,10 +103,14 @@ sumPARfPAR <- function(dataset){
   return(temp_sum)
 }
 # # testing
-# sig_Pod680_2018 <- sumPARfPAR(Pod_680_d_2018)
-# sig_Pod680_2019 <- sumPARfPAR(Pod_680_d_2019)
-# sigsat_pod680_2018 <- sumPARfPAR(sat_pod680_2018)
-
+# sig_Pod680_2018 <- Pod_680_d %>% filter(.,time %>% substring(.,1,4)==2018)
+# sig_Pod680_2019 <- Pod_680_d %>% filter(.,time %>% substring(.,1,4)==2019)
+# mmNDVI_Pod680_2018 <- getMaxMinNDVI(sig_Pod680_2018)
+# mmNDVI_Pod680_2019 <- getMaxMinNDVI(sig_Pod680_2019)
+# temp_fPAR <- 1-((mmNDVI[2]-sig_Pod680_2018$NDVI[1])/(mmNDVI[2]-mmNDVI[1]))^0.625
+# sumPARfPAR(sig_Pod680_2018)
+# sig_Pod680_2018$time %>% length()
+# sumPARfPAR(sig_Pod680_2018) * sig_Pod680_2018$time %>% length() * 864
 
 # Calculate APRA and return a vector that contains APRA for 2018 & 2019
 # index 1: 2018 APAR
@@ -114,8 +118,9 @@ sumPARfPAR <- function(dataset){
 APAR <- function(dataset){
   
   # unit conversion index
-  # W/m^-2 * d -> MJ/ha
-  unitCon <- 864
+  # W/m^-2 * d -> MJ/ha (abandoned)
+  # (MJ/day)/m^2 -> (MJ/day)/ha
+  unitCon <- 10000
   
   dataset_2018 <- dataset %>% filter(.,time %>% substring(.,1,4)==2018)
   dataset_2019 <- dataset %>% filter(.,time %>% substring(.,1,4)==2019)
@@ -138,11 +143,11 @@ APAR <- function(dataset){
 Yield <- function(dataset){
   
   # unit conversion index
-  # MJ/ha
-  unitCon <- 864
+  # (MJ/day)/m^2 -> (MJ/day)/ha
+  unitCon <- 10000
   
   # 4.2 is provided by the dsat tutorial
-  # kg/MJ
+  # g/MJ -> kg/MJ
   LUE <- 4.2*0.001
   
   # 
@@ -154,8 +159,8 @@ Yield <- function(dataset){
   sum_2018 <- sumPARfPAR(dataset_2018)
   sum_2019 <- sumPARfPAR(dataset_2019)
   
-  Yield_2018 <- sum_2018*length(dataset_2018$time)*unitCon*LUE*HI
-  Yield_2019 <- sum_2019*length(dataset_2019$time)*unitCon*LUE*HI
+  Yield_2018 <- sum_2018*unitCon*LUE*HI
+  Yield_2019 <- sum_2019*unitCon*LUE*HI
   
   return(c(Yield_2018,Yield_2019))
 }
