@@ -1,9 +1,25 @@
 Report: Multi-scale estimation of crop yield
 ================
 
-## Intro
+## Introduction
 
-## Goals
+A maize field dataset was collected at Whittier Farms, in Sutton, MA. In
+this project, we are going to use Mark micro-meteorology estimates and
+Sentinel-2 1C level data to predict maize yields.
+
+#### Goals
+
+  - What is the overall aim of the project and what specific Earth
+    Observation problem is it trying to solve?
+    
+    This project is aiming to compare the maize yield results generated
+    from data with different spatial scales, and hopefully, the
+    comparison can help us understand what are the key elements that are
+    affecting the predicted yield.
+
+#### Equations
+
+<img src="Docs/figures/Equations.png" width="100%" style="display: block; margin: auto;" />
 
 ## Data
 
@@ -134,9 +150,16 @@ Yield_sat_pod667 14954.93  9827.617
 
 ## Summary
 
-## Acknowledgements
+## References
 
   - Lobell, D. B., Asner, G. P., Ortiz-Monasterio, J. I., & Benning, T.
     L. (2003). Remote sensing of regional crop production in the Yaqui
     Valley, Mexico: estimates and uncertainties. Agriculture, Ecosystems
     & Environment, 94(2), 205-220.
+
+  - “Carbon Balance CERES 2010.Ppsx.” Dropbox.
+    <https://www.dropbox.com/s/v8ony8cgyh29erv/Carbon%20Balance%20CERES%202010.ppsx?dl=0>
+    (May 2, 2020).
+
+  - Agroimpacts/Geog287387. 2020. Agricultural Impacts Research Group.
+    HTML. <https://github.com/agroimpacts/geog287387> (May 2, 2020).
