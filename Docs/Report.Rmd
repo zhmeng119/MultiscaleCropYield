@@ -8,9 +8,17 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 knitr::opts_knit$set(root.dir = "..")
 ```
 
-## Intro
+## Introduction
 
 
+Use the Mark micro-meteorology estimates to run a mechanistic crop simulator to predict maize yields.
+Use the mechanistic model outputs (including simulated LAI) and a subset of simplified inputs to develop an empirical model of yields.
+Using these relationships together with remotely-sensed predictors (primarily LAI), we will map predicted yields in ~16-25 m2 blocks through the fields.
+
+
+A maize field dataset was collected at Whittier Farms, in Sutton, MA. In this project, we are going to use Mark micro-meteorology estimates and Sentinel-2 1C level data to predict maize yields. 
+- What is the overall aim of the project and what specific Earth Observation problem is it trying to solve?
+  dfgdfgdgdgd
 
 ## Goals
 
