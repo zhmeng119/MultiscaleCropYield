@@ -19,7 +19,7 @@ Sentinel-2 1C level data to predict maize yields.
 
 #### Equations
 
-<img src="Docs/figures/Equations.png" width="100%" style="display: block; margin: auto;" />
+<img src="./Docs/figures/Equations.png" width="100%" style="display: block; margin: auto;" />
 
 ## Data
 

@@ -19,7 +19,7 @@ A maize field dataset was collected at Whittier Farms, in Sutton, MA. In this pr
 #### Equations
 
 ```{r, out.width = "100%", echo=FALSE, fig.align='center'}
-knitr::include_graphics("Docs/figures/Equations.png")
+knitr::include_graphics("./Docs/figures/Equations.png")
 ```
 
 
