@@ -17,15 +17,19 @@ A maize field dataset was collected at Whittier Farms, in Sutton, MA. In this pr
   This project is aiming to compare the maize yield results generated from data with different spatial scales, and hopefully, the comparison can help us understand what are the key elements that are affecting the predicted yield.
 
 #### Equations
+Here are the equations that will be applied on the predicted yield calculation. 
 
-```{r, out.width = "100%", echo=FALSE, fig.align='center'}
-knitr::include_graphics("./Docs/figures/Equations.png")
-```
+![](../Docs/figures/Equations.png)
+
+In addition, the unit of thoes variable are also critical.
+
+![](../Docs/figures/Units.PNG)
+
+We can tell that the units are not at the same level, therefore it is necessary to do the `unit conversion` in the later calculation.
 
 
-```{r, echo=FALSE}
 
-```
+
 
 ## Data
 
@@ -69,16 +73,19 @@ head(gee_pod680_2019 %>% select(.,date, NDVI))
 We can see there are repeated date values in the raw data, so we will `aggregate` the repeated values by `mean`. And we also notice that the Sentinel 2 data is not generated daily due to the temporal resolution.
 
 
-## Method
+## Methodology and workflow
 
 
-```{r , echo=FALSE}
+
+
+
+```{r}
 
 ```
 
 ## Result
 
-### Yield prediction based on pod data (ε = 4.2, HI = 0.7)
+### Yield prediction based on pod data (ε = 4.2, HI = 0.4♦)
 ```{r, eval=FALSE}
 # Results of APAR
                 2018     2019
@@ -112,6 +119,8 @@ Yield_sat_pod667 14954.93  9827.617
 
 ## Summary
 
+#### Teamwork
+
 ## References
 
 - Lobell, D. B., Asner, G. P., Ortiz-Monasterio, J. I., & Benning, T. L. (2003). Remote sensing of regional crop production in the Yaqui Valley, Mexico: estimates and uncertainties. Agriculture, Ecosystems & Environment, 94(2), 205-220.
@@ -120,6 +129,9 @@ Yield_sat_pod667 14954.93  9827.617
 
 - Agroimpacts/Geog287387. 2020. Agricultural Impacts Research Group. HTML. https://github.com/agroimpacts/geog287387 (May 2, 2020).
 
+- Agroimpacts/Geog287387. 2020. Agricultural Impacts Research Group. HTML. https://github.com/agroimpacts/geog287387 (May 2, 2020).
+
+- Arable Data Dictionary https://www.arable.com/wp-content/uploads/2020/01/AR_Data_Dictionary_2020-01.pdf (May 2, 2020).
 
 
 

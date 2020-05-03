@@ -19,7 +19,17 @@ Sentinel-2 1C level data to predict maize yields.
 
 #### Equations
 
-<img src="./Docs/figures/Equations.png" width="100%" style="display: block; margin: auto;" />
+Here are the equations that will be applied on the predicted yield
+calculation.
+
+![](../Docs/figures/Equations.png)
+
+In addition, the unit of thoes variable are also critical.
+
+![](../Docs/figures/Units.PNG)
+
+We can tell that the units are not at the same level, therefore it is
+necessary to do the `unit conversion` in the later calculation.
 
 ## Data
 
@@ -109,11 +119,11 @@ We can see there are repeated date values in the raw data, so we will
 `aggregate` the repeated values by `mean`. And we also notice that the
 Sentinel 2 data is not generated daily due to the temporal resolution.
 
-## Method
+## Methodology and workflow
 
 ## Result
 
-### Yield prediction based on pod data (ε = 4.2, HI = 0.7)
+### Yield prediction based on pod data (ε = 4.2, HI = 0.4♦)
 
 ``` r
 # Results of APAR
@@ -150,6 +160,8 @@ Yield_sat_pod667 14954.93  9827.617
 
 ## Summary
 
+#### Teamwork
+
 ## References
 
   - Lobell, D. B., Asner, G. P., Ortiz-Monasterio, J. I., & Benning, T.
@@ -163,3 +175,10 @@ Yield_sat_pod667 14954.93  9827.617
 
   - Agroimpacts/Geog287387. 2020. Agricultural Impacts Research Group.
     HTML. <https://github.com/agroimpacts/geog287387> (May 2, 2020).
+
+  - Agroimpacts/Geog287387. 2020. Agricultural Impacts Research Group.
+    HTML. <https://github.com/agroimpacts/geog287387> (May 2, 2020).
+
+  - Arable Data Dictionary
+    <https://www.arable.com/wp-content/uploads/2020/01/AR_Data_Dictionary_2020-01.pdf>
+    (May 2, 2020).
