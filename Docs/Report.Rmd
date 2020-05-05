@@ -194,12 +194,12 @@ temp1 <- (result_Yield[,1]-result_Yield_sat[,1])/result_Yield[,1]
 temp2 <- (result_Yield[,2]-result_Yield_sat[,2])/result_Yield[,2]
 
 # Percent of difference
-temp3 <- cbind(temp1,temp2)
+temp3 <- cbind(temp1*100,temp2*100)
 colnames(temp3) <- c("2018","2019")
 temp3
 ```
 
-We notice that the predicted yield in 2019 on the Sentinel2-based result is averagely 11% less than the pod-based result. However based how poor the data quality of Sentinel2 dataset, this is an acceptable result. Thus, using Sentinel data to calculate predicted yield is feasible. 
+We notice that the predicted yield in 2019 on the Sentinel2-based result is averagely 11% less than the pod-based result. However, based on how poor the data quality of the Sentinel2 dataset, this is an acceptable result. Thus, using Sentinel data to calculate the predicted yield is feasible.
 
 ## Summary
 - Was the project aim was realized? Was an Earth Observation limit pushed back?
