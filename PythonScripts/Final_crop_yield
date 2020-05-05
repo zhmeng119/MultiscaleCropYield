@@ -1,0 +1,439 @@
+import os 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import interpolate
+from pandas.core.frame import DataFrame
+from matplotlib.pyplot import MultipleLocator
+import matplotlib as mpl
+import seaborn as sns
+from datetime import datetime
+from matplotlib.pyplot import MultipleLocator
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures as pf
+from scipy.interpolate import interp1d
+
+# Read Pod NDVI data and read sentinel NDVI data
+
+def read_Pod_NDVI_data(Pod_data_dir, wrk_url):
+    
+    # This function will read two season Pod NDVI data
+    # Pod_data_dir: the full path of pod data with the file name and extension, which include two years data (two seasons )
+    # wrk_url: the path of working folder 
+    # This function will return the path of the two seasons NDVI
+    
+    with open(Pod_data_dir, 'r', encoding='utf-8') as rf:
+        time_2018 = []
+        time_2019 = []
+        NDVI_data_2018 = []
+        NDVI_data_2019 = []
+        
+        # check the working folder exist or not
+        if os.path.exists(wrk_url):          
+            out1_url = os.path.join(wrk_url, 'Pod_ndvi_2018_data.csv') 
+            out2_url = os.path.join(wrk_url, 'Pod_ndvi_2019_data.csv') 
+        else:
+            folder = os.makedirs(wrk_url)
+            out1_url = os.path.join(folder, 'Pod_ndvi_2018_data.csv') 
+            out2_url = os.path.join(folder, 'Pod_ndvi_2019_data.csv') 
+        
+        for line in rf.readlines()[1:]:
+            splited_data = line.split(',')
+            
+            # replace '/' to '-'
+            t = splited_data[1].replace('/', '-').split('-') 
+
+            if int(t[0]) < 10:
+                month = '0' + t[0]
+            else:
+                month = t[0]
+            
+            if int(t[1]) < 10:
+                day = '0' + t[1]
+            else:
+                day = t[1]
+            
+            time = t[2] + '-' + month + '-' + day
+            
+            NDVI_data = splited_data[2]
+            if '2018' in time:
+                time_2018.append(time)
+                NDVI_data_2018.append(NDVI_data)
+            else:
+                time_2019.append(time)
+                NDVI_data_2019.append(NDVI_data)
+                
+        # write season one NDVI data              
+        with open(out1_url, 'w', encoding='utf-8') as wf:
+            wf.write('time,NDVI\n')
+            for (time, NDVI_data) in zip(time_2018, NDVI_data_2018):
+                wf.write(time + ',' + NDVI_data + '\n')
+                
+        # write season two NDVI data 
+        with open(out2_url, 'w', encoding='utf-8') as wf:
+            wf.write('time,NDVI\n')
+            for (time, NDVI_data) in zip(time_2019, NDVI_data_2019):
+                wf.write(time + ',' + NDVI_data + '\n')
+                                                
+    return out1_url, out2_url
+
+def read_Sentinel_NDVI_data(Sentinel_data_dir, wrk_url):
+    
+    # This function will read sentinel NDVI data and calculate the average NDVI per day
+    # Sentinel_data_dir: the full path of sentinel data with the file name and extension (Only one season data)
+    # wrk_url: the path of working folder 
+    # This function will return the path of one season NDVI 
+
+    if os.path.exists(wrk_url):
+        out_url = os.path.join(wrk_url,'Sentinel_ndvi_data.csv') 
+    else:
+        folder = os.makedirs(wrk_url)
+        out_url = os.path.join(folder,'Sentinel_ndvi_data.csv')
+    
+    with open(Sentinel_data_dir, 'r', encoding='utf-8') as rf:
+        time1 = []
+        NDVI_data = []
+        NDVI = [] 
+        for line in rf.readlines()[1:]:
+            splited_data = line.split(',')
+            time1.append(splited_data[18][:10]) 
+            NDVI_data.append(splited_data[14])
+            
+        NDVI_data = np.array(NDVI_data)  
+        
+    # get the average NDVI value for a day 
+    print(NDVI_data.shape[0])
+    time = []
+    for i in range(0, NDVI_data.shape[0], 2): 
+        temp1 = (float(NDVI_data[i]) + float(NDVI_data[i+1])) / 2.0   
+        NDVI.append(str(temp1))   
+        time.append(time1[i])
+    
+    with open(out_url, 'w', encoding='utf-8') as wf:
+            wf.write('time,NDVI\n')
+            for (time, NDVI) in zip(time, NDVI):
+                wf.write(time + ',' + NDVI + '\n')
+    
+    return out_url 
+
+# Plot original Pod_NDVI and Sentinel_NDVI data (not interpolated NDVI data)
+
+def plot_NDVI_curve_image(Pod_NDVI_data, Sentinel_NDVI_data):
+    
+    # Pod_NDVI_data: The full path of the original Pod NDVI data 
+    # Sentinel_NDVI_data: The full path of the original Sentinel NDVI data
+    
+    # If the pod data is different, it is necessary to change the right pod number for th egraph title 
+    
+    with open(Pod_NDVI_data, 'r', encoding='utf-8') as fpod, open(Sentinel_NDVI_data, 'r', encoding='utf-8') as fsent:
+        pod_time = []
+        pod_data = []
+        sent_time = []
+        sent_data = []
+        for line in fpod.readlines()[1:]:
+            time, data = line.strip('\n').split(',')
+            pod_time.append(time)
+            pod_data.append(float(data))
+        x_pod = [datetime.strptime(t, '%Y-%m-%d').date() for t in pod_time]
+
+        for line in fsent.readlines()[1:]:
+            time, data = line.strip('\n').split(',')
+            sent_time.append(time)
+            sent_data.append(float(data))
+        x_sent = [datetime.strptime(t, '%Y-%m-%d').date() for t in sent_time]
+
+        fig = plt.figure()
+        plt.plot(pod_time, pod_data, 'b-', label='Pod NDVI')
+        plt.plot(sent_time, sent_data, 'r-', label='Sentinel NDVI')
+        plt.xlabel('Date(2018)')
+        plt.ylabel('NDVI')
+        x_major_locator = MultipleLocator(10)
+        y_major_locator = MultipleLocator(0.1)
+        ax = plt.gca()
+    
+        ax.xaxis.set_major_locator(x_major_locator)
+        
+        ax.yaxis.set_major_locator(y_major_locator)
+        plt.title('Pod NDVI VS Sentinel-2 NDVI, Pod671')        ### Need to chnage the pod number 
+        plt.legend()
+        fig.autofmt_xdate()
+        plt.savefig('Pod NDVI VS Sentinel-2 NDVI, 680-2019.png')
+        plt.show()
+        
+# Join Pod and Sentinel data
+
+def join_pod_sent_data(pod_data, sent_data, out_url):
+    
+    # pod_data: a full path of pod data
+    # sent_data: a full path of sentinel data
+    # out_url: the path of working folder 
+    # this function will return a full path of joined pod and sentinel data 
+    
+    if os.path.exists(out_url):
+        out_url = os.path.join(out_url, 'joined_data.csv')
+    else:       
+        folder = os.makedirs(out_url)     
+        out_url = os.path.join(folder, 'joined_data.csv')
+    with open(pod_data, 'r', encoding='utf-8') as pod, open(sent_data, 'r', encoding='utf-8') as sent:
+        pod_time = []
+        pod_ndvi_val = []
+        for line in pod.readlines()[1:]:
+            split_data = line.strip().split(',')
+            pod_time.append(split_data[0])    
+            pod_ndvi_val.append(split_data[1])
+        pod_len = len(pod_time)
+
+        sent_time = []
+        sent_ndvi_val = []
+        for line in sent.readlines()[1:]:
+            split_data = line.strip().split(',')
+            sent_time.append(split_data[0])   
+            sent_ndvi_val.append(split_data[1])
+        sent_len = len(sent_time)
+    with open(out_url, 'w', encoding='utf-8') as f:
+        max_len = max(pod_len, sent_len)
+        f.write('index,time,pod_ndvi,sent_ndvi\n')
+        for idx in range(pod_len):
+            time = pod_time[idx]
+            data = pod_ndvi_val[idx]
+            flag = False
+            for i in range(sent_len):
+                if sent_time[i] == time:
+                    f.write(str(idx) + ',' + time + ',' + str(data) + ',' + str(sent_ndvi_val[i]) + '\n')
+                    flag = True
+                    break
+            if flag:
+                pass
+            else:
+                f.write(str(idx) + ',' + time + ',' + str(data) + ',' + '\n')
+                
+    return out_url 
+
+# Intepolate Pod data
+def interpolated_pod_data(pod_data):
+    
+    # pod_data: the full path of pod NDVI data 
+    # This function will return a list of interpolated Pod NDVI data 
+    
+    with open(pod_data, 'r', encoding='utf-8') as f:
+        pod_x = []         # pod_x: the index of Pod data 
+        pod_time = []      # pod_time: date in Pod data
+        pod_ndvi_val = []  # pod_ndvi_val:  Pod NDVI 
+        time = []           
+        idx = 0             
+        for line in f.readlines()[1:]:
+            split_data = line.strip().split(',')
+            time.append(split_data[1])
+            if split_data[-1] != '':
+                pod_x.append(int(idx))
+                pod_time.append(split_data[1])
+                pod_ndvi_val.append(float(split_data[-1]))
+            idx += 1
+
+
+    fig = plt.figure()
+    ##### Plot original Sentinel data #############
+    plt.scatter(pod_x, pod_ndvi_val, color='blue', label='Original Pod NDVI')
+    plt.xlabel('date(2018)')
+    plt.ylabel('NDVI')
+    plt.legend()
+    ############ Interpolate Sentinel data using function interp1d ##########
+    # kind parameter: the method of interpolation (i.e. linear, nearest, quadratic and etc.)
+    func = interp1d(pod_x, pod_ndvi_val, kind='nearest', bounds_error=False, fill_value='extrapolate')
+    # x_new: a list. it includes all the index of data.
+    x_new = [i for i in range(idx)]  
+    # y_new: the interpolated data 
+    y_new = func(x_new)             
+    plt.scatter(x_new, y_new, color='red', marker='*', label='Interpolated Pod NDVI')
+    plt.legend()
+
+    ##### set coordinates axis ########
+    x_major_locator = MultipleLocator(10)  # x axis interval 
+    y_major_locator = MultipleLocator(0.5)  # y axis interval 
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(x_major_locator)
+    ax.yaxis.set_major_locator(y_major_locator)
+    fig.autofmt_xdate()
+    plt.savefig('Intepolated Pod.png')
+    plt.show()
+    
+    return y_new
+    
+# Get rid of invalid Sentinel data and Interpolate Sentinel data
+def pred_sent_data(joined_data):
+    
+    # This function check the validation of Sentinel data firstly, and then interpolated Sentinel data 
+    # joined_data: the full path of the joined Sentinel and pod data 
+    # This function will return a list of interpolated Sentinel NDVI data 
+    
+    with open(joined_data, 'r', encoding='utf-8') as f:
+        sent_x = []         # sent_x: the index of Sentinel
+        sent_time = []      # sent_time: the date of Sentinel data 
+        sent_ndvi_org = []  # sent_ndvi_org: sentinel NDVI 
+        
+        pod_ndvi_org = []  # pod_ndvi_org: Pod NDVI 
+        
+        time = []           
+        idx = 0
+        
+        val_sent_ndvi = []  # valid Sentinel data
+        val_sent_time = []  #  valid Sentinel time
+        val_sent_x = []     # the index of sentinel data 
+        
+        for line in f.readlines()[1:]:
+            split_data = line.strip().split(',')
+            time.append(split_data[1])
+            pod_ndvi = float(split_data[2])  # pod_ndvi  
+            if split_data[-1] != '':
+                sent_x.append(int(idx))
+                sent_time.append(split_data[1])
+                sent_ndvi_org.append(float(split_data[-1]))
+                
+                # Get rid of wrong Sentinel data - valid sentinel data 
+                if (0.8 * pod_ndvi) <= float(split_data[-1]):
+                    val_sent_x.append(int(idx))
+                    val_sent_time.append(split_data[1])
+                    val_sent_ndvi.append(float(split_data[-1]))
+                
+            idx += 1
+
+        ############ date formate ###########
+        val_sent_time = [datetime.strptime(t, '%Y-%m-%d').date() for t in val_sent_time]
+        sent_time = [datetime.strptime(t, '%Y-%m-%d').date() for t in sent_time]  
+        time = [datetime.strptime(t, '%Y-%m-%d').date() for t in time]           
+        
+
+    fig = plt.figure()
+    ##### Plot Valid Sentinel data ############
+    plt.scatter(val_sent_time, val_sent_ndvi, color='blue', label='Valid Sentinel NDVI')  
+    plt.xlabel('date(2018)')
+    plt.ylabel('NDVI')
+
+    ############ Interpolate Sentinel data using interp1d ##########
+    func = interp1d(val_sent_x, val_sent_ndvi, kind='nearest', bounds_error=False, fill_value='extrapolate')
+    x_new = [i for i in range(idx)]  # x_new: a list of index 
+    y_new = func(x_new)              # y_new; interpolated NDVI 
+    plt.scatter(time, y_new, color='red', marker='*', label='Interpolated Sentinel NDVI') 
+    plt.legend()
+
+    #####Set coordinate axis ########
+    x_major_locator = MultipleLocator(10)   # x axis inreval 
+    y_major_locator = MultipleLocator(0.5)  # y axis interval 
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(x_major_locator)
+    ax.yaxis.set_major_locator(y_major_locator)
+    fig.autofmt_xdate()
+    plt.savefig('Interpolated Sentinel.png')
+    plt.show()
+    
+    return y_new
+    
+
+#############################   Calculate the Yield in each season (Unit: Kg/ha)   #################
+# Calculate fPAR 
+def calculate_fPAR_NDVI(MAX_NDVI, MIN_NDVI, NDVI):
+    
+    # MAX_NDVI: a value. The maximum value of NDVI in a season 
+    # MIN_NDVI: a value. The minimum value of NDVI is a season 
+    # NDVI: a full path of NDVI.  All the NDVI in a season
+    
+    fPAR = 1- ((MAX_NDVI - NDVI)/(MAX_NDVI - MIN_NDVI)) ** 0.625
+    
+    return fPAR
+     
+# Calculate PAR 
+def calculate_PAR(downwelling_SW):
+    
+    # downwelling_SW: a full path of downwelling SW 
+    
+    PAR = 0.5 * downwelling_SW
+    
+    return PAR
+
+# Calculate Yield
+def calculate_yield( NDVI, downwelling_SW, sigma, havest_index):
+    
+    # NDVI: all the NDVI in a season
+    # downwelling_SW: a full path of downwelling SW
+    # sigma: constant 
+    # havest_index: constant 
+    # This function will return the yield production 
+    
+    temp = 0 
+    # maximum NDVI and minimum NDVI
+    NDVI_max = np.max(NDVI)
+    NDVI_min = np.min(NDVI)
+
+    
+    for i in range(NDVI.shape[0]):
+        daily_fPAR = calculate_fPAR_NDVI(NDVI_max,NDVI_min, NDVI[i])
+        daily_PAR = calculate_PAR(downwelling_SW[i])
+        temp = temp + daily_fPAR * daily_PAR
+    
+    Yield = temp * sigma * HI * 10   # unit: kg/ha
+    
+    return Yield   
+
+#########################################################
+################ Read data #####################
+# pod data
+data_url = r'E:\EO_2\pod_680'     # changed url 
+s19_url = os.path.join(data_url, 's19') # need to create a folder named s19 
+
+p_dat_d_url = os.path.join(data_url, 'Pod_680_d.csv' )  # changed url 
+S_dat18_url = os.path.join(data_url,'Sentinel_680_2018.csv') # changed url 
+S_dat19_url = os.path.join(data_url,'Sentinel_6_2019.csv') # changed url 
+
+sigma = 4.2
+HI = 0.4
+
+data_Pod = pd.read_csv(p_dat_d_url)
+SWdw = data_Pod['SWdw'].values
+
+# read pod 2018 and 2019 NDVI data
+pod_NDVI_18_url, pod_NDVI_19_url = read_Pod_NDVI_data(p_dat_d_url, data_url) 
+print(pod_NDVI_18_url, pod_NDVI_19_url)
+
+# read sentinel 2018 and 2019 NDVI data 
+sent_NDVI_18_url = read_Sentinel_NDVI_data(S_dat18_url, data_url)
+print(sent_NDVI_18_url)
+
+sent_NDVI_19_url = read_Sentinel_NDVI_data(S_dat19_url,s19_url )
+print(sent_NDVI_19_url)
+
+########## data processing ########
+
+# join sentinel and pod data
+join18_data = join_pod_sent_data(pod_NDVI_18_url,sent_NDVI_18_url , data_url)
+join19_data = join_pod_sent_data(pod_NDVI_19_url, sent_NDVI_19_url, s19_url )
+# interpolate sentinel data
+sentinel8_interp_data= pred_sent_data(join18_data)
+sentinel9_interp_data= pred_sent_data(join19_data)   # retun a list
+# interpolate pod data 
+pod18_interp_data = interpolated_pod_data(pod_NDVI_18_url)
+pod19_interp_data = interpolated_pod_data(pod_NDVI_19_url)
+
+################# calculate yield ##################
+# pod yield in 2018 
+detaT_pod_18 = pod18_interp_data.shape[0]
+pod18_yield = calculate_yield(pod18_interp_data, SWdw[:detaT_pod_18], sigma, HI )
+print('pod yield 2018: ', pod18_yield)
+# pod yield in 2019 
+detaT_pod_19= pod19_interp_data.shape[0]
+pod19_yield = calculate_yield(pod19_interp_data, SWdw[:detaT_pod_19], sigma, HI )
+print('pod yield 2019: ', pod19_yield)
+
+# sentinel yield in 2018 
+sentinel18_yield = calculate_yield(sentinel8_interp_data,SWdw[:detaT_pod_18 ], sigma, HI )
+print('sentinel yield 2018: ', sentinel18_yield)
+# sentinel yield in 2019
+sentinel19_yield = calculate_yield(sentinel9_interp_data,SWdw[:detaT_pod_19 ], sigma, HI )
+print('sentinel yield 2019: ', sentinel19_yield)
+
+
+###################### plot Original POD and Sentinel NDVI  ########################
+# remeber to change the title in the function 
+plot_NDVI_curve_image(pod_NDVI_18_url, sent_NDVI_18_url )
+plot_NDVI_curve_image(pod_NDVI_19_url, sent_NDVI_19_url )
+
+
