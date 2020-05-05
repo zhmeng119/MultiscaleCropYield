@@ -123,7 +123,7 @@ def plot_NDVI_curve_image(Pod_NDVI_data, Sentinel_NDVI_data):
     # Pod_NDVI_data: The full path of the original Pod NDVI data 
     # Sentinel_NDVI_data: The full path of the original Sentinel NDVI data
     
-    # If the pod data is different, it is necessary to change the right pod number for th egraph title 
+    # If the pod data is different, it is necessary to change the right pod number for the graph title 
     
     with open(Pod_NDVI_data, 'r', encoding='utf-8') as fpod, open(Sentinel_NDVI_data, 'r', encoding='utf-8') as fsent:
         pod_time = []
