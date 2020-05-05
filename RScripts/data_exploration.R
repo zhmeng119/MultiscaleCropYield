@@ -1,5 +1,6 @@
 # Part 1: read data from server
 library(aRable)
+library(dplyr)
 
 # Read hourly & daily data data from server
 

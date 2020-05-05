@@ -1,5 +1,5 @@
 ---
-title: "Report: Multi-scale estimation of crop yield"
+title: "Report: Multi-Scale Estimation of Crop Yield"
 output: github_document
 ---
 
@@ -9,26 +9,12 @@ knitr::opts_knit$set(root.dir = "..")
 ```
 
 ## Introduction
-A maize field dataset was collected at Whittier Farms, in Sutton, MA. In this project, we are going to use Mark micro-meteorology estimates and Sentinel-2 1C level data to predict maize yields. 
+  The quantification of crop production at the regional level is not only important for local farmers but also benefits the management and carbon cycle modeling. In this project, we are going to use Mark micro-meteorology estimates (a maize field dataset collected at Whittier Farms, in Sutton, MA) and Sentinel-2 1C level data to predict maize yields. 
 
 #### Goals
 - What is the overall aim of the project and what specific Earth Observation problem is it trying to solve?
 
-  This project is aiming to compare the maize yield results generated from data with different spatial scales, and hopefully, the comparison can help us understand what are the key elements that are affecting the predicted yield.
-
-#### Equations
-Here are the equations that will be applied on the predicted yield calculation. 
-
-![](../Docs/figures/Equations.png)
-
-In addition, the unit of thoes variable are also critical.
-
-![](../Docs/figures/Units.PNG)
-
-We can tell that the units are not at the same level, therefore it is necessary to do the `unit conversion` in the later calculation.
-
-
-
+  This project is aiming to compare the predicted maize yield results generated from data with different spatial scales, such as ground level and space level, and hopefully, the comparison can help us understand what are the factors that are affecting the predicted yield.
 
 
 ## Data
@@ -43,7 +29,7 @@ library(dplyr)
 # read data from cvs
 data_d <- read.csv(file = "Data/Pod_A000680_daily.csv")
 # take a quick of the data 
-sample_d <- data_d %>% select(.,time,device,Cl,NDVI,SWdw) %>% slice(85:95)
+sample_d <- data_d %>% select(.,time,device,Cl,NDVI,SWdw) %>% slice(88:98)
 head(sample_d)
 ```
 We can see that there are `NA` values in the dataset, which will do harm to the calculation of `APRA`. Therefore, we will introduce preprocess function to the dataset to get rid of `NA` values.
@@ -51,10 +37,11 @@ We can see that there are `NA` values in the dataset, which will do harm to the 
 #### Hourly
 Here is an expample of `hourly` pod data.
 ```{r}
+source("RScripts/functions.R")
 # read data from cvs
 data_h <- read.csv(file = "Data/Pod_A000680_hourly.csv")
 # take a quick of the data 
-sample_h <- data_h %>% select(.,time,device,PARdw,PARuw,SWdw) %>% slice(85:95)
+sample_h <- data_h %>% select(.,time,device,PARdw,PARuw,SWdw) %>% slice(88:98)
 head(sample_h)
 ```
 
@@ -62,7 +49,7 @@ head(sample_h)
 
 The data is pulled from GoogleEarthEngine based on the location of pod A000680, A000671, A000667.
 
-#### Daily
+#### 2-3 days
 ```{r}
 gee_pod680_2018 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2018.csv')
 gee_pod680_2019 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2019.csv')
@@ -70,58 +57,180 @@ gee_pod680_2019 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2019.csv')
 head(gee_pod680_2018 %>% select(.,date, NDVI))
 head(gee_pod680_2019 %>% select(.,date, NDVI))
 ```
-We can see there are repeated date values in the raw data, so we will `aggregate` the repeated values by `mean`. And we also notice that the Sentinel 2 data is not generated daily due to the temporal resolution.
+We can see there are repeated date values in the raw data, this is because the study area is right on the overlay section of two tiles, so we will `aggregate` the repeated records by `mean`. And we also notice that the Sentinel 2 data is not generated daily due to the temporal resolution.
 
 
-## Methodology and workflow
+## Methodology
+
+- What were the methods you developed and/or applied, and why they might be considered “New Methods in Earth Observation”?
+
+  The calculation of predicted yield relys on a simple and useful paradigm Yield = APAR * ε * HI (Monteith (1972, 1977)), and it requires the combination of knowledge of crop phenology and multi-temporal data. The PAR in equation (2) will be replaced with (4), and the SWdw value is generated from field-based sensor. As for the NDVI in fAPAR, we have data generated from both field-based sensor and satellite (Sentinel 2).
+  
 
 
+- Equations
+
+![](../Docs/figures/Oneforall.png)
+
+We can tell that the units are not at the same level, therefore it is necessary to do the `unit conversion` in the later calculation.
 
 
+## Workflow
+
+#### Pod-based
+
+1. Read in pod dataset with `ArableClient()`
+```{r}
+library(aRable)
+p_dat_680_d <- ArableClient(device = "A000680", measure = "daily",
+                         start = "2017-06-01", end = "2019-09-06",
+                         email = "lestes@clarku.edu",
+                         password = "rollinghills88",  # replace this w/ actual p
+                         tenant = "clark")
+```
+
+2. Feed the pod dataset to data preprocessing function (`data_preprocess()`)
+  + Split the pod dataset by **year**(`pod_2018` & `pod_2019`);
+  + Linearly Interpolate NDVI for `pod_2018` and `pod_2019` data;
+  + Check if `pod_2018` and `pod_2019` still contain NA NDVI value;
+      + a) Yes: Remove the corresponding row from the dataset
+      + b) No: Skip to the last step
+  + Combine `pod_2018` and `pod_2019` and output the dataset.
 
 ```{r}
-
+Pod_680_d <- p_dat_680_d
+which(is.na(Pod_680_d$NDVI))
+Pod_680_d <- data_preprocess(Pod_680_d)
+which(is.na(Pod_680_d$NDVI))
 ```
+
+3. Select column time, NDVI, SWdw from the preprocessed pod dataset, and create a new column called PAR and PAR =0.5*SWdw.
+```{r}
+Pod_680_d <- Pod_680_d %>% select(.,time,NDVI,SWdw) %>% mutate(PAR = SWdw*0.5)
+head(Pod_680_d)
+```
+
+4. Feed the result from *Step 3* to function `Yield()` to calculate predicted yield. The first value in the result is the predicted yield for 2018, and the sencond value is for 2019.
+```{r}
+Yield_Pod680 <- Yield(Pod_680_d)
+Yield_Pod680
+```
+
+#### Sentinel2-based
+
+1. [Pull the Sentinel2 data from GEE](https://code.earthengine.google.com/80d92e7cbbed5a2e12935bb96e503534)
+  + Create imagecollection and filter the date to ('2018-06-09', '2018-09-05') and ('2019-06-18', '2019-09-05');
+  + Calculate NDVI and add the NDVI band to each image for imagecollections
+  + Extract NDVI values from imagecollections based on the location of pods, and export it as `CSV` file.
+
+Here is a picture of the location of pods.
+![](../Docs/figures/Location_pods.png)
+
+
+
+
+2. Read in Sentinel2 dataset and pod dataset. The pod data is already preprocessed.
+```{r}
+gee_pod680_2018 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2018.csv')
+gee_pod680_2019 <- read.csv(file = 'Data/EO_pod_NDVI_data/pod680_2019.csv')
+pod680 <- read.csv(file = 'Data/Pod_680_d.csv')
+
+head(gee_pod680_2018 %>% select(.,date, NDVI))
+head(pod680)
+```
+
+3. Feed Sentinel2 dataset and to data preprocessing function (`satdata_preprocess()`) to preprocess the Sentinel2 data first.
+  + Select `date` and `NDVI` column from Sentinel2 dataset
+  + **Aggregate** the repeated records by average
+  + Output a tidy dataset
+```{r}
+gee_pod680_2018 <- satdata_preprocess(gee_pod680_2018)
+gee_pod680_2019 <- satdata_preprocess(gee_pod680_2019)
+
+head(gee_pod680_2018)
+```
+  
+4. Feed the preprocessed Sentinel2 dataset and pod dataset to function `sat_pod_process()`. This is a further step on processing Sentinel2 dataset based on pod data.
+  + Create a copy of pod dataset as `data_temp`
+  + Pick out the appropriate data from pod dataset (`pod_d`) based on the date of Sentinel2 dataset(`sat_data`);
+  + Merge pod dataset (`pod_d`) and Sentinel2 dataset(`sat_data`) as `sat_pod`;
+  + Drop the NDVI value from Sentinel2 dataset(`sat_data`) in `sat_pod` if it is less than **80%** of the NDVI value from pod dataset (`pod_d`);
+  + Join `sat_pod` to the copy of original pod dataset (`data_temp`);
+  + Linearly Interpolate the missing NDVI value from `sat_pod` in `data_temp`; 
+  + Output a tidy dataset with column time, NDVI, SWdw and PAR.
+```{r}
+sat_pod680_2018 <- sat_pod_process(gee_pod680_2018, pod680)
+sat_pod680_2019 <- sat_pod_process(gee_pod680_2019, pod680)
+
+head(sat_pod680_2018)
+```
+
+5. Combine the processed data from the same pod, and put them into function `Yield()`. The first value in the result is the predicted yield for 2018, and the sencond value is for 2019.
+```{r}
+sat_pod680 <- rbind(sat_pod680_2018,sat_pod680_2019)
+Yield_sat_pod680 <- Yield(sat_pod680)
+Yield_sat_pod680
+```
+
 
 ## Result
-
-### Yield prediction based on pod data (ε = 4.2, HI = 0.4♦)
-```{r, eval=FALSE}
-# Results of APAR
-                2018     2019
-APAR_Pod680 43540.34 31586.62
-APAR_Pod671 44077.92 33530.94
-APAR_Pod667 45864.11 32117.12
-
-# Results of Yield 
-                 2018     2019
-Yield_Pod680 128008.6 92864.66
-Yield_Pod671 129589.1 98580.96
-Yield_Pod667 134840.5 94424.33
+```{r, results='hide' }
+source("RScripts/data_exploration.R")
+source("RScripts/GEE_data_exploration.R")
 ```
 
-### Results of comparison between pod data and  Sentinel 2 - 1C data
-There are 35 records in 2018, and 31 in 2019. Therefore, the `Yield` value will be smaller than the pod based data.
+### Comparison of predicted yield between pod data and  Sentinel 2 - 1C data
 
-```{r  eval = FALSE}
-# Pod
-                     2018     2019
-testYield_Pod680 19738.87 12957.23
-testYield_Pod671 19480.00 13256.72
-testYield_Pod667 19928.53 13297.09
+- ε = 4.2 g/MJ, HI = 0.4
 
-# Sentinel 2 -1C
-                     2018      2019
-Yield_sat_pod680 14814.60 10293.292
-Yield_sat_pod671 14367.76 10871.309
-Yield_sat_pod667 14954.93  9827.617
+```{r }
+# Pod-based
+result_Yield
+
+# Sentinel2-based
+result_Yield_sat
+
+temp1 <- (result_Yield[,1]-result_Yield_sat[,1])/result_Yield[,1]
+temp2 <- (result_Yield[,2]-result_Yield_sat[,2])/result_Yield[,2]
+
+# Percent of difference
+temp3 <- cbind(temp1,temp2)
+colnames(temp3) <- c("2018","2019")
+temp3
 ```
+
+We notice that the predicted yield in 2019 on the Sentinel2-based result is averagely 11% less than the pod-based result. However based how poor the data quality of Sentinel2 dataset, this is an acceptable result. Thus, using Sentinel data to calculate predicted yield is feasible. 
 
 ## Summary
+- Was the project aim was realized? Was an Earth Observation limit pushed back?
+  
+  Yes. In this project, NDVI is the key factor that affects the result of predicted yield. We think the method of using ground level data and space level data to calculate predicted yield is useful. Once we have high quality satellite image (daily, atmospheric corrected), it is easier to monitor the crop yield for 
+large area farms. What's more, the ground-level data also plays a role as a baseline, helping us better quality control space-level data than relying on a cloud mask or quality flags.
 
-#### Teamwork
+- What bottlenecks or roadblocks were hit ?
+
+  - We are using level 1C data which is top of atmosphere data, so atmospheric impacts will do harm to the NDVI values. Additionally, the Sentinel 2 dataset is not daily generated due to the temporal resolution. Therefore, these two issues lead to insufficient data and atmospherically corrupted data.  We also apply a threshold to get rid of those unreasonable data, however, the threshold value is based on the percent that the sentinel NDVI is less than the pod NDVI in the same day. Though it sounds a little bit un-rigorous, it is good to have pod data as a baseline. Last but not least, thanks to the insufficient data situation, the interpolated dataset becomes less reliable. 
+
+  - The method applied on interpolation could also impact the result.
+ 
+- What are potential improvements, and any next steps you plan to take?
+
+  - We should run more statistic analysis to find a proper threshold for filtering unreasonable data in Sentinel2 dataset.
+  - Try different methods on the calculation of APAR.
+  - Other high spatial-temporal resolution data such as drone data or planet data can be apply on the calculation.
+
+
+## Teamwork
+
+- Zhenhua Meng (Rscipts, Report, slides)
+
+- Jiena He (PythonScripts, Report, slides)
+
 
 ## References
+- Monteith, J. L. (1972). Solar radiation and productivity in tropical ecosystems. Journal of applied ecology, 9(3), 747-766.
+
+- Monteith, J. L. (1977). Climate and the efficiency of crop production in Britain. Philosophical Transactions of the Royal Society of London. B, Biological Sciences, 281(980), 277-294.
 
 - Lobell, D. B., Asner, G. P., Ortiz-Monasterio, J. I., & Benning, T. L. (2003). Remote sensing of regional crop production in the Yaqui Valley, Mexico: estimates and uncertainties. Agriculture, Ecosystems & Environment, 94(2), 205-220.
 

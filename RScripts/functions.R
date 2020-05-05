@@ -1,6 +1,7 @@
 # Calculate APAR & Yield
 library(dplyr)
 library(zoo)
+library(lubridate)
 
 # Pod data based
 ################################################################################################################################################################
@@ -25,7 +26,7 @@ data_preprocess <- function(dataset){
     approxZ_2018 <- zoo::na.approx(dataset$NDVI[1:enddate_2018],na.rm = FALSE) %>% as.data.frame()
     approxZ_2019 <- zoo::na.approx(dataset$NDVI[startdate_2019:length(dataset$NDVI)],na.rm = FALSE) %>% as.data.frame()
     approxZ_whole <- rbind(approxZ_2018,approxZ_2019)
-    print(which(is.na(approxZ_whole)))
+    # print(which(is.na(approxZ_whole)))
     # check NA for the interpolation result, assign 0 to the NA value 
     # and change the value in dataset at the same time
     for(index in indexNA_raw){
@@ -92,7 +93,7 @@ getMaxMinNDVI <- function(dataset){
 sumPARfPAR <- function(dataset){
   temp_sum <- 0
   for(day in 1:length(dataset$time)){
-    print(day)
+    # print(day)
     PAR <- dataset$PAR[day]
     # calculate fPAR
     mmNDVI <- getMaxMinNDVI(dataset)
@@ -198,8 +199,8 @@ sat_pod_process <- function(sat_data, pod_d){
   sat_pod <- merge(pod_d,sat_data,by.x = "time",by.y = "date")
   sat_pod <- sat_pod %>% as.data.frame()
   for(row in 1:nrow(sat_pod)){
-    if(sat_pod$NDVI[row]*0.75 > sat_pod$NDVI_Sen[row]){
-      print("replace with NA")
+    if(sat_pod$NDVI[row]*0.8 > sat_pod$NDVI_Sen[row]){
+      # print("replace with NA")
       sat_pod$NDVI_Sen[row] <- NA
     }
   }
@@ -214,15 +215,16 @@ sat_pod_process <- function(sat_data, pod_d){
   # This is a preparation for the later interpolation
   if(is.na(temp$NDVI_Sen[1])){
     temp$NDVI_Sen[1] <- temp$NDVI.x[1]
-    print("Fixing the head")
+    # print("Fixing the head")
   }
   if(is.na(temp$NDVI_Sen[length(temp$NDVI_Sen)])){
     
     temp$NDVI_Sen[length(temp$NDVI_Sen)] <- temp$NDVI.x[length(temp$NDVI_Sen)]
-    print("Fixing the tail")
+    # print("Fixing the tail")
   }else{
     print("All good")
   }
+  print("Fixed")
   temp$NDVI_Sen <- na.approx(temp$NDVI_Sen)
   temp <- subset(temp, select=-c(X,NDVI.x,time.y,NDVI.y,SWdw.y,PAR.y))
   colnames(temp) <- c("time","SWdw","PAR","NDVI")
